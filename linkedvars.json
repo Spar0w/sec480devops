@@ -1,6 +1,0 @@
-{
-    "vcenter":"vcenter.sam.local",
-    "esxiIP":"192.168.7.19",
-    "datastore":"datastore2-super9",
-    "newnetadap":"480-WAN"
-}
