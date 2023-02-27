@@ -1,0 +1,23 @@
+#configure bluex-fw
+- name: vyos network config
+  hosts: vyos
+  vars_prompt:
+
+  - name: password
+    prompt: Enter your new VyOS password
+    private: true
+  tasks:
+    - name: set the password hash fact
+      set_fact:
+        password_hash: "{{ password | password_hash('sha512') }}"
+    - name: load vyos config from template
+      become: yes
+      template:
+        src: files/config.boot.j2
+        dest: /config/config.boot
+        mode: "0775"
+        owner: root
+        group: vyattacfg
+    - name: bounce and end
+      become: yes
+      shell: nohup bash -c "/usr/bin/sleep 5 && /usr/sbin/shutdown -r now" &

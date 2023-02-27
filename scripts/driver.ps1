@@ -5,4 +5,5 @@ Write-Host
 $vars
 Write-Host
 connect-vcenter $vars["vcenter"]
-get-vms "BASEVM"
+set-network -VMName "blue1-fw" 
+#sstart-vm "blue1-fw"

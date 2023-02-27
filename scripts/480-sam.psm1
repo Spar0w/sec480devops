@@ -1,5 +1,90 @@
 #Samuel Barrows 480-module
 
+function new-switch($vars){
+    $vswitch = Read-Host "What would you like your new switch to be called?"
+    
+    New-VirtualSwitch -VMHost $vars["esxiIP"] -Name $vswitch | New-VirtualPortGroup -Name "$vswitch-pg"
+}
+
+function get-netinfo(){
+    param(
+        [Parameter(Mandatory=$true)][string]$VMName
+    )
+
+    $vm = Get-VM -Name $VMName
+
+    $mac = $($vm | Get-NetworkAdapter).MacAddress
+    $netadp = $($vm | Get-NetworkAdapter).NetworkName
+
+    $vm | Get-VMGuest | Select VM, @{N="IP Address";E={$_.IPAddress[0]}}, @{N="MAC";E={"$mac"}}, @{N="Network Adapter";E={"$netadp"}}
+
+}
+
+function sstart-vm(){
+    param(
+        [string]$Name
+    )
+
+    $vm = Get-VM -Name $Name
+
+    if ($vm.PowerState -eq "PoweredOff"){
+        Write-Host "Powering on..."
+        Start-VM -VM $vm -Confirm -RunAsync
+    } else {
+        Write-Host "Host $($vm.Name) is already on"
+    }
+
+}
+
+function set-network(){
+    param(
+        #[Parameter($Mandatory=true)]
+        [string]$VMName,
+        #[Parameter()]
+        [string]$Network
+    )
+
+    try{
+        Get-VirtualNetwork -Name $Network
+    } catch {
+        if ([string]::IsNullOrWhiteSpace($Network)){
+            $netList = Get-VirtualNetwork
+
+            while ($True){
+                #List base vms
+                $x=0
+                $netList | ForEach-Object{
+                    $name = $_.Name
+                    Write-Host "[$x] $name"
+                    $x+=1
+                }
+                $netnum = Read-Host "Enter the number associated with the network you would like to assign to $VMName"
+
+                #validate input
+                try {
+                    if ([int]$netnum -gt $netList.Length - 1 || [int]$netnum -lt 1){
+                        Write-Error "Invalid option, please try again"
+                    } else {
+                        $Network = $netList[[int]$netnum].Name
+                        break
+                    }
+                } catch {
+                    Write-Error "Invalid option, please try again"
+                }
+            }
+
+            if([string]::IsNullOrWhiteSpace($Network)) {
+                Write-Error "An Error Occured: Network not found"
+                exit
+            }
+        }
+    }
+    
+
+    Get-VM -Name $VMName | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName $Network
+
+}
+
 function read-config($configfile){
     
     #read user input or assign default values for the rest of the module
@@ -131,7 +216,6 @@ function linkedcloner($vars){
         $linkedVM = New-VM -LinkedClone -Name $linkedName -VM $vm -ReferenceSnapshot $snapshot -VMHost $vmhost -Datastore $ds
 
         #set network adapter
-        $linkedVM | Get-NetworkAdapter | Set-NetworkAdapter -NetworkName $vars["newnetadap"]
 
     } catch {
         Write-Host "An error occurred creating the linked clone:"
