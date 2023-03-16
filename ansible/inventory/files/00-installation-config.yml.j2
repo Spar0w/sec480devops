@@ -1,0 +1,13 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    {{ device }}:
+      addresses:
+        - {{ lan_ip }}/{{ prefix }}
+      nameservers:
+        search: [{{ domain }}]
+        addresses: [{{ name_server }}]
+      routes:
+      - to: default
+        via: {{ gateway }}

@@ -1,0 +1,54 @@
+- name: ubuntu config
+  hosts: ubuntu
+  tasks:
+  - name: create the .ssh dir
+    file:
+      path: "/home/{{ ansible_user }}/.ssh"
+      state: directory
+      mode: 0700
+  - name: create authorized_keys file
+    file:
+      path: "/home/{{ ansible_user }}/.ssh/authorized_keys"
+      state: touch
+      mode: 0644
+  - name: copy over key block
+    blockinfile:
+      dest: "/home/{{ ansible_user }}/.ssh/authorized_keys"
+      block: "{{ public_key }}"
+  
+  - name: create sudoers dropin file
+    file:
+      path: /etc/sudoers.d/480
+      state: touch
+      mode: 0440
+    become: yes
+
+  - name: create a drop in entry
+    blockinfile:
+      dest: /etc/sudoers.d/480
+      block: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
+    become: yes
+
+  - name: set the hostname
+    hostname:
+      name: "{{ hostname }}"
+    become: yes
+  
+  - name: add host to hosts file
+    lineinfile:
+      path: /etc/hosts
+      line: 127.0.1.1 {{ hostname }}
+    become: yes
+  
+  - name: replace existing netplan with new netplan
+    template:
+        src: inventory/files/00-installation-config.yml.j2
+        dest: /etc/netplan/00-installer-config.yaml
+        mode: "0644"
+        owner: root
+        group: root
+    become: yes
+  
+  - name: bounce the box
+    shell: "sleep 5 && shutdown -r"
+    become: yes
