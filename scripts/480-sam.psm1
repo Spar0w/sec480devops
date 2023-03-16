@@ -1,5 +1,6 @@
 #Samuel Barrows 480-module
 
+<<<<<<< HEAD
 function new-switch(){
     param(
         [Parameter(Mandatory=$true)][System.Collections.Hashtable]$vars,
@@ -9,6 +10,10 @@ function new-switch(){
     if ([string]::IsNullOrWhiteSpace($vswitch)){
         $vswitch = Read-Host "What would you like your new switch to be called?"
     } 
+=======
+function new-switch($vars){
+    $vswitch = Read-Host "What would you like your new switch to be called?"
+>>>>>>> 99f74d763f002dc1ea91712a59969060858321fc
     
     New-VirtualSwitch -VMHost $vars["esxiIP"] -Name $vswitch | New-VirtualPortGroup -Name "$vswitch-pg"
 }
@@ -223,7 +228,10 @@ function linkedcloner($vars){
         $linkedVM = New-VM -LinkedClone -Name $linkedName -VM $vm -ReferenceSnapshot $snapshot -VMHost $vmhost -Datastore $ds
 
         #set network adapter
+<<<<<<< HEAD
         return $newname
+=======
+>>>>>>> 99f74d763f002dc1ea91712a59969060858321fc
 
     } catch {
         Write-Host "An error occurred creating the linked clone:"
